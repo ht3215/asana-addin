@@ -81,9 +81,22 @@ async function loadWorkspaces() {
   }
 }
 
+async function loadUsers(ws) {
+  const users = await apiList(`/users?workspace=${ws}&opt_fields=name`);
+  users.sort((a, b) => a.name.localeCompare(b.name));
+  const sel = $("assignee");
+  sel.innerHTML = "";
+  sel.add(new Option("(unassigned)", ""));
+  sel.add(new Option("Me", "me"));
+  users.forEach((u) => sel.add(new Option(u.name, u.gid)));
+  const saved = localStorage.getItem("asanaAssignee");
+  if (saved && [...sel.options].some((o) => o.value === saved)) sel.value = saved;
+}
+
 async function loadProjects() {
   const ws = $("workspace").value;
   localStorage.setItem("asanaWorkspace", ws);
+  await loadUsers(ws);
   const projects = await apiList(`/projects?workspace=${ws}&archived=false&opt_fields=name`);
   projects.sort((a, b) => a.name.localeCompare(b.name));
   fill($("project"), projects);
@@ -167,6 +180,8 @@ async function createTask() {
       projects: [$("project").value],
     };
     if ($("due").value) data.due_on = $("due").value;
+    if ($("assignee").value) data.assignee = $("assignee").value;
+    localStorage.setItem("asanaAssignee", $("assignee").value);
     const res = await api("/tasks?opt_fields=permalink_url", {
       method: "POST",
       body: JSON.stringify({ data }),
@@ -216,6 +231,7 @@ Office.onReady((info) => {
     $("workspace").innerHTML = "";
     $("project").innerHTML = "";
     $("section").innerHTML = "";
+    $("assignee").innerHTML = "";
     $("settings").open = true;
     setStatus("Token removed.", true);
   };
