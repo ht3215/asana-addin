@@ -167,16 +167,24 @@ async function createTask() {
       projects: [$("project").value],
     };
     if ($("due").value) data.due_on = $("due").value;
-    if ($("section").value) {
-      data.memberships = [{ project: $("project").value, section: $("section").value }];
-      delete data.projects;
-    }
-
     const res = await api("/tasks?opt_fields=permalink_url", {
       method: "POST",
       body: JSON.stringify({ data }),
     });
     const url = res.data.permalink_url;
+    const taskGid = res.data.gid;
+
+    // Move the new task into the chosen section
+    if ($("section").value) {
+      try {
+        await api(`/sections/${$("section").value}/addTask`, {
+          method: "POST",
+          body: JSON.stringify({ data: { task: taskGid } }),
+        });
+      } catch (e) {
+        setStatus("Task created but could not move to section: " + e.message, false);
+      }
+    }
 
     await Excel.run(async (ctx) => {
       const ws = ctx.workbook.worksheets.getActiveWorksheet();
