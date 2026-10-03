@@ -10,11 +10,35 @@ function setStatus(msg, ok) {
   s.className = ok === undefined ? "" : ok ? "ok" : "err";
 }
 
+// Token storage: workbook (travels with the file) or this device only
+function getToken() {
+  return Office.context.document.settings.get("asanaToken") || localStorage.getItem("asanaToken") || "";
+}
+
+function saveToken(tok, inWorkbook) {
+  const st = Office.context.document.settings;
+  if (inWorkbook) {
+    st.set("asanaToken", tok);
+    localStorage.removeItem("asanaToken");
+  } else {
+    localStorage.setItem("asanaToken", tok);
+    st.remove("asanaToken");
+  }
+  st.saveAsync(() => {});
+}
+
+function clearToken() {
+  const st = Office.context.document.settings;
+  st.remove("asanaToken");
+  st.saveAsync(() => {});
+  localStorage.removeItem("asanaToken");
+}
+
 async function api(path, opts = {}) {
   const res = await fetch(API + path, {
     ...opts,
     headers: {
-      Authorization: "Bearer " + localStorage.getItem("asanaToken"),
+      Authorization: "Bearer " + getToken(),
       "Content-Type": "application/json",
       Accept: "application/json",
     },
@@ -172,9 +196,20 @@ Office.onReady((info) => {
   if (info.host !== Office.HostType.Excel) return;
 
   $("saveToken").onclick = () => {
-    localStorage.setItem("asanaToken", $("token").value.trim());
+    const tok = $("token").value.trim();
+    if (!tok) return setStatus("Paste a token first.", false);
+    saveToken(tok, $("inWorkbook").checked);
     $("token").value = "";
+    $("settings").open = false;
     loadWorkspaces();
+  };
+  $("clearToken").onclick = () => {
+    clearToken();
+    $("workspace").innerHTML = "";
+    $("project").innerHTML = "";
+    $("section").innerHTML = "";
+    $("settings").open = true;
+    setStatus("Token removed.", true);
   };
   $("workspace").onchange = () => loadProjects().catch((e) => setStatus(e.message, false));
   $("project").onchange = () => loadSections().catch((e) => setStatus(e.message, false));
@@ -183,7 +218,7 @@ Office.onReady((info) => {
 
   Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, readRow);
 
-  if (localStorage.getItem("asanaToken")) {
+  if (getToken()) {
     $("settings").open = false;
     loadWorkspaces();
   } else {
