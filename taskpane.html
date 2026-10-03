@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Excel to Asana</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; font-size: 13px; margin: 12px; color: #222; }
+    label { display: block; margin-top: 10px; font-weight: 600; }
+    select, input, textarea, button { width: 100%; box-sizing: border-box; padding: 6px; margin-top: 4px; font: inherit; }
+    textarea { height: 90px; }
+    button { background: #0f6cbd; color: #fff; border: 0; cursor: pointer; margin-top: 14px; padding: 8px; }
+    button.secondary { background: #eee; color: #222; margin-top: 6px; }
+    #status { margin-top: 12px; white-space: pre-wrap; }
+    .ok { color: #107c10; } .err { color: #c50f1f; }
+    details { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <details id="settings">
+    <summary>Asana token</summary>
+    <input id="token" type="password" placeholder="Personal Access Token"/>
+    <button class="secondary" id="saveToken">Save and load projects</button>
+  </details>
+
+  <label>Workspace</label>
+  <select id="workspace"></select>
+
+  <label>Project</label>
+  <select id="project"></select>
+
+  <label>Section</label>
+  <select id="section"></select>
+
+  <label>Due date</label>
+  <input id="due" type="date"/>
+
+  <label>Task name from column</label>
+  <select id="nameCol"></select>
+
+  <label>Task name</label>
+  <input id="name"/>
+
+  <label>Notes (other columns of the row)</label>
+  <textarea id="notes"></textarea>
+
+  <button id="create">Create task in Asana</button>
+  <div id="status"></div>
+
+  <script src="taskpane.js"></script>
+</body>
+</html>
